@@ -1,55 +1,64 @@
-# Pintos
+# Pintos  
 
-这是伯克利操作系统课程（CS162）的课程设计项目。学生需要以小组为单位，以课程初期给定的Pintos操作系统为框架，拓展下列三个模块的功能：
-1. 进程系统（Tag：`proj-userprog-completed`）；
-2. 线程系统（Branch：`proj-thread`）；
-3. 文件系统（Branch：`proj-filesys`）；
+This is the course project for the Berkeley Operating Systems course (CS162). Students, working in teams, are required to extend the functionality of the following three modules using the Pintos operating system framework provided at the beginning of the course:  
 
-## 进程系统
+1. **Process System** (Tag: `proj-userprog-completed`)  
+2. **Thread System** (Branch: `proj-thread`)  
+3. **File System** (Branch: `proj-filesys`)  
 
-对Pintos的用户进程模块做出如下功能拓展：
-+ 支持向用户进程传递命令行参数；
-+ 实现以下进程控制系统调用（功能与Linux中的同名系统调用类似）：
-  + `exec`：创建一个新进程，令其运行指定的应用程序（可以被当作是`fork`和`exec`的混合体）；
-  + `wait`：等待当前进程的子进程`pid`执行完毕；
-  + `halt`：关闭Pintos，用于熟悉系统调用执行流程；
-+ 实现以下文件操作系统调用：`create, remove, open, filesize, read, write, seek, tell, close`；
-  + `create, remove`：创建文件，删除文件；
-  + `open, close`：开启指定文件，返回文件描述符。关闭与给定文件描述符对应的文件；
-  + `read, write, seek, tell, filesize`：文件操作；
+## Process System  
 
-## 线程系统
+Enhancements to the user process module of Pintos include:  
 
-对Pintos的线程系统模块做出如下功能拓展：
-+ 实现一个严格优先级线程调度器（Strict Priority Scheduler），优先级范围为`0 ~ 63`：
-  + 无论在何种情况下，高优先级线程都会先于低优先级线程被调度运行；
-  + 三种同步原语（lock, semaphore, condition variable）需优先将资源给予高优先级线程；
-  + 实现优先级捐献（priority donation），解决由于严格优先级调度导致的优先级反转问题（priority inversion）；
-+ 实现简化版的`pthread`线程库，支持如下系统调用：
-  + `sys_pthread_create`：创建用户线程；
-  + `sys_pthread_exit`：用户线程退出；
-  + `sys_pthread_join`：暂停当前线程，直到目标线程执行完毕再恢复；
-  + `lock_acquire, lock_release, sema_down, sema_up`：用户空间同步原语；
-+ 如果进程执行时出现了导致进程需要退出的事件，事件之间应按照如下优先级（从低到高）相互覆盖：
-  1. 主线程执行`pthread_exit`：主线程等待其余所有线程自然退出之后退出进程；
-  2. 任何线程执行系统调用`exit`：进程中所有位于用户态的线程不可继续执行，位于内核态的线程退出内核之后需立刻退出；
-  3. 任何线程执行时触发异常：与`2`相同，只不过进程退出码必须为`-1`；
-  
-## 文件系统
+- **Passing Command-Line Arguments** to user processes.  
+- **Implementing the following process control system calls** (similar to their Linux counterparts):  
+  - `exec`: Creates a new process to run the specified application (a hybrid of `fork` and `exec`).  
+  - `wait`: Waits for the child process `pid` of the current process to complete.  
+  - `halt`: Shuts down Pintos, used to familiarize students with system call execution.  
+- **Implementing the following file operation system calls**:  
+  - `create`, `remove`, `open`, `filesize`, `read`, `write`, `seek`, `tell`, `close`:  
+    - `create`, `remove`: Create and delete files.  
+    - `open`, `close`: Open a file and return a file descriptor; close a file corresponding to the given descriptor.  
+    - `read`, `write`, `seek`, `tell`, `filesize`: Perform file operations.  
 
-对Pintos的文件系统做出如下功能拓展：
-+ 为文件系统添加Buffer Cache：
-  + 至多可缓存64个磁盘扇区；
-  + 需使用任意一种类LRU算法作为调度政策；
-  + 必须是一个Write Back Cache；
-  + 确保某个扇区同一时间只能被一个线程所读写，但是属于同一个文件的不同扇区可以被多个线程同时读写；
-+ 可拓展文件：
-  + 支持对文件的随机访问；
-  + 树型索引结构：
-    + 文件数据块可分散在磁盘各处，无需连续分布；
-    + 至少需要支持类似于Unix FFS文件中的二级间接指针（doubly-indirect pointers）；
-  + 妥善处理扇区分配失败的情况，系统必须回滚到未分配之前的状态；
-+ 子目录：
-  + 实现`chdir, mkdir, readdir, isdir`等目录相关的系统调用；
-  + `open, close, exec, remove, inumber`需妥善处理目录相关的逻辑；
-  + 系统需同时支持相对目录和绝对目录；
+## Thread System  
+
+Enhancements to the thread system module of Pintos include:  
+
+- **Implementing a Strict Priority Scheduler** with priority values ranging from `0` to `63`:  
+  - High-priority threads are always scheduled before low-priority threads, under any circumstance.  
+  - Synchronization primitives (lock, semaphore, condition variable) prioritize granting resources to high-priority threads.  
+  - **Priority Donation** is implemented to solve priority inversion caused by strict priority scheduling.  
+
+- **Simplified `pthread` library** supporting the following system calls:  
+  - `sys_pthread_create`: Create a user thread.  
+  - `sys_pthread_exit`: Exit a user thread.  
+  - `sys_pthread_join`: Suspend the current thread until the target thread completes execution.  
+  - `lock_acquire`, `lock_release`, `sema_down`, `sema_up`: User-space synchronization primitives.  
+
+- **Handling process termination events** in the following priority order (from low to high):  
+  1. The main thread calls `pthread_exit`: The main thread waits for all other threads to exit naturally before terminating the process.  
+  2. Any thread executes the `exit` system call: All threads in user mode must stop executing, and threads in kernel mode must exit immediately after leaving the kernel.  
+  3. Any thread triggers an exception during execution: Same as `2`, but the process exit code must be `-1`.  
+
+## File System  
+
+Enhancements to the file system of Pintos include:  
+
+- **Buffer Cache**:  
+  - Supports caching up to 64 disk sectors.  
+  - Implements an LRU-like scheduling policy.  
+  - Functions as a Write-Back Cache.  
+  - Ensures that only one thread can read or write a sector at a time, but different sectors of the same file can be accessed by multiple threads simultaneously.  
+
+- **Extendable Files**:  
+  - Supports random access to files.  
+  - Implements a tree-structured indexing system:  
+    - File data blocks can be scattered across the disk, without needing contiguous allocation.  
+    - Supports at least doubly-indirect pointers, similar to Unix FFS.  
+  - Properly handles sector allocation failures by rolling back to the pre-allocation state.  
+
+- **Subdirectories**:  
+  - Implements directory-related system calls such as `chdir`, `mkdir`, `readdir`, and `isdir`.  
+  - Ensures that `open`, `close`, `exec`, `remove`, and `inumber` handle directory logic appropriately.  
+  - Supports both relative and absolute paths.  
